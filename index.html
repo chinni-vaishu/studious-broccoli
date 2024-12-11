@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeetCode Bulk Profile Data Fetcher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom right, #6a11cb, #2575fc);
+            color: #ffffff;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #f3f3f3;
+            margin-bottom: 20px;
+        }
+
+        .input-area {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: #ff7e5f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #ff6b47;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            display: none;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        td {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .badge {
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .gold {
+            background-color: gold;
+            color: black;
+        }
+
+        .silver {
+            background-color: silver;
+            color: black;
+        }
+
+        .bronze {
+            background-color: #cd7f32;
+            color: white;
+        }
+
+        .profile-link {
+            color: #ff7e5f;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .profile-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LeetCode Bulk Profile Data Fetcher</h1>
+        <p>Enter a list of LeetCode usernames below to fetch their profile data, including ratings, problems solved, badges, and a direct link to their profile.</p>
+
+        <div class="input-area">
+            <textarea id="usernameInput" placeholder="Enter usernames, one per line..."></textarea>
+        </div>
+
+        <button onclick="fetchProfiles()">Fetch Profiles</button>
+
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Rating</th>
+                    <th>Problems Solved</th>
+                    <th>Badges</th>
+                    <th>Profile</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        async function fetchProfiles() {
+            const input = document.getElementById('usernameInput').value.trim();
+            if (!input) {
+                alert('Please enter at least one username.');
+                return;
+            }
+
+            const usernames = input.split('\n').map(name => name.trim()).filter(name => name);
+            const tbody = document.querySelector('#resultTable tbody');
+            tbody.innerHTML = '';
+
+            for (const username of usernames) {
+                try {
+                    const response = await fetch(`https://leetcode.com/${username}/`);
+                    const text = await response.text();
+
+                    const ratingMatch = text.match(/Rating:.*?>([0-9,]+)/);
+                    const solvedMatch = text.match(/solved <strong>([0-9,]+)<\/strong>/);
+                    const badgeMatches = [...text.matchAll(/class="badge ([a-z]+)"/g)];
+
+                    const rating = ratingMatch ? ratingMatch[1].replace(',', '') : 'N/A';
+                    const problemsSolved = solvedMatch ? solvedMatch[1] : 'N/A';
+                    const badges = badgeMatches.length ? badgeMatches.map(b => formatBadges(b[1])).join(' ') : 'None';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${username}</td>
+                        <td>${rating}</td>
+                        <td>${problemsSolved}</td>
+                        <td>${badges}</td>
+                        <td><a href="https://leetcode.com/${username}/" class="profile-link" target="_blank">View Profile</a></td>
+                    `;
+                    tbody.appendChild(row);
+                } catch (error) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${username}</td>
+                        <td colspan="4" style="color: red;">Error fetching data</td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            }
+
+            document.getElementById('resultTable').style.display = 'table';
+        }
+
+        function formatBadges(badge) {
+            let badgeClass = '';
+            switch (badge.toLowerCase()) {
+                case 'gold': badgeClass = 'gold'; break;
+                case 'silver': badgeClass = 'silver'; break;
+                case 'bronze': badgeClass = 'bronze'; break;
+            }
+            return `<span class="badge ${badgeClass}">${badge}</span>`;
+        }
+    </script>
+</body>
+</html>
